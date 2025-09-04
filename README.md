@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>애경케미칼 한가위 덕담 나누기 이벤트</title>
+  <meta name="description" content="애경케미칼 동료들에게 전하는 칭찬·격려·응원 덕담 이벤트" />
+  <meta name="theme-color" content="#005BAC" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --brand:#005BAC; } /* AKC Blue */
+    html,body{ font-family:"Pretendard",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif; }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-white to-slate-50 min-h-screen">
+  <main class="mx-auto p-4 sm:p-6 lg:max-w-5xl">
+    <!-- 헤더 -->
+    <section class="mb-6 text-center">
+      <!-- 로고 자리에 회사 로고 이미지가 있으면 교체 -->
+      <div class="mx-auto h-12 w-28 grid place-items-center rounded-lg font-extrabold text-[var(--brand)] text-xl border border-slate-200">AKC</div>
+      <h1 class="mt-2 text-2xl lg:text-3xl font-extrabold tracking-tight text-[var(--brand)]">추석 한가위 덕담 이벤트</h1>
+      <p class="text-slate-600 mt-2">우리의 미래를 향한 <b>칭찬·격려·응원</b> 한마디 🌕🍂</p>
+    </section>
+
+    <!-- 안내 배너 -->
+    <div class="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm">
+      <p class="text-sm text-slate-600">작성한 덕담은 운영팀 검토 후 실시간 목록에 노출됩니다. 모바일에서도 1분이면 참여 완료!</p>
+    </div>
+
+    <!-- 레이아웃: 모바일 1열 / PC 2열 -->
+    <div class="mt-4 lg:grid lg:grid-cols-2 lg:gap-6">
+      <!-- 입력 카드 -->
+      <section class="rounded-2xl border bg-white shadow-sm">
+        <div class="p-4 sm:p-6">
+          <form id="wishForm" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-semibold mb-1" for="name">이름 <span class="text-slate-400 font-normal">(선택)</span></label>
+                <input id="name" type="text" maxlength="30" class="w-full rounded-xl border-slate-300 focus:border-[var(--brand)] focus:ring-[var(--brand)]" placeholder="홍길동" />
+              </div>
+              <div>
+                <label class="block text-sm font-semibold mb-1" for="dept">소속/현장 <span class="text-slate-400 font-normal">(선택)</span></label>
+                <input id="dept" type="text" maxlength="40" class="w-full rounded-xl border-slate-300 focus:border-[var(--brand)] focus:ring-[var(--brand)]" placeholder="예: 울산공장·청양공장·본사 등" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold mb-1" for="message">덕담 메시지 <span class="text-[var(--brand)]">(필수)</span></label>
+              <textarea id="message" rows="4" maxlength="200" class="w-full rounded-xl border-slate-300 focus:border-[var(--brand)] focus:ring-[var(--brand)]" placeholder="예) 야간 교대 근무에도 늘 안전 최우선! 든든한 동료 여러분, 풍성한 한가위 보내세요!"></textarea>
+              <div class="flex justify-between text-xs text-slate-500 mt-1">
+                <span>최대 200자</span>
+                <span id="charCount">0 / 200</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input id="anon" type="checkbox" class="rounded border-slate-300 text-[var(--brand)] focus:ring-[var(--brand)]" />
+              <label for="anon" class="text-sm text-slate-700">익명으로 남기기</label>
+            </div>
+
+            <button id="submitBtn" type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 text-white font-semibold shadow-sm hover:opacity-95 active:opacity-90">
+              보내기
+            </button>
+            <p id="status" class="mt-2 text-sm" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <!-- 실시간 목록 -->
+      <section class="mt-6 lg:mt-0 rounded-2xl border bg-white shadow-sm p-4 lg:sticky lg:top-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg lg:text-xl font-bold text-[var(--brand)]">따끈한 덕담</h2>
+          <button id="refreshBtn" class="text-sm text-[var(--brand)] font-semibold">새로고침</button>
+        </div>
+        <ul id="list" class="space-y-3 lg:max-h-[70vh] lg:overflow-auto lg:pr-1"></ul>
+      </section>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="mt-10 text-center text-xs text-slate-400">© 2025 애경케미칼 추석 덕담 이벤트</footer>
+  </main>
+
+  <script>
+    // ===== 환경 변수 (교체 필요) =====
+    const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbxmtA286ZJ1STYpUpaIRWUJ2taRzTgZyldaAT0sYamSwloX8kmzjvBERWr_OmUOpiM/exec"; // Apps Script 웹앱 URL
+    const APP_TOKEN    = "AKC_2025_chuseok_!P@O#I"; // Code.gs의 TOKEN과 동일하게
+
+    // ===== 유틸 =====
+    const $ = (sel) => document.querySelector(sel);
+    const statusEl = $("#status");
+    const btn = $("#submitBtn");
+    const listEl = $("#list");
+    const msgEl = $("#message");
+    const countEl = $("#charCount");
+
+    // 문자수 카운트
+    msgEl.addEventListener("input", () => { countEl.textContent = `${msgEl.value.length} / 200`; });
+
+    // 오프라인 큐 (네트워크 실패 시 로컬에 보관 후 재전송)
+    const QUEUE_KEY = "akc_wish_queue_v1";
+    const getQueue = () => JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+    const setQueue = (q) => localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+
+    async function submitWish(payload) {
+      const res = await fetch(ENDPOINT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("network");
+      return res.json();
+    }
+
+    function renderItem(item) {
+      const name = item.isAnon === "TRUE" || item.isAnon === true ? "익명" : (item.name || "익명");
+      const dept = item.dept ? ` · ${item.dept}` : "";
+      const when = new Date(item.timestamp);
+      const time = new Intl.DateTimeFormat("ko-KR", { dateStyle: "short", timeStyle: "short" }).format(when);
+      const li = document.createElement("li");
+      li.className = "rounded-2xl border bg-white p-4 shadow-sm";
+      li.innerHTML = `
+        <div class="flex items-center justify-between text-sm">
+          <div class="font-semibold">${name}<span class="text-slate-500">${dept}</span></div>
+          <div class="text-slate-400">${time}</div>
+        </div>
+        <p class="mt-2 whitespace-pre-wrap text-slate-800">${(item.message || "").replace(/[<>]/g,"")}</p>
+      `;
+      return li;
+    }
+
+    async function loadList() {
+      try {
+        const limit = matchMedia("(min-width:1024px)").matches ? 80 : 50;
+        const res = await fetch(`${ENDPOINT_URL}?action=list&limit=${limit}`, { method: "GET" });
+        const data = await res.json();
+        listEl.innerHTML = "";
+        const items = data.items || [];
+        if (!items.length) {
+          const empty = document.createElement("li");
+          empty.className = "rounded-2xl border bg-white p-4 shadow-sm text-slate-500";
+          empty.textContent = "아직 덕담이 없습니다. 첫 덕담을 남겨주세요!";
+          listEl.appendChild(empty);
+          return;
+        }
+        items.forEach((it) => listEl.appendChild(renderItem(it)));
+      } catch (e) {
+        // 목록 로딩 실패는 조용히 패스
+      }
+    }
+
+    // 주기적 갱신
+    setInterval(loadList, 10000);
+    $("#refreshBtn").addEventListener("click", loadList);
+
+    // 폼 제출
+    $("#wishForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+      const payload = {
+        token: APP_TOKEN,
+        name: $("#name").value.trim(),
+        dept: $("#dept").value.trim(),
+        message: msgEl.value.trim(),
+        isAnon: $("#anon").checked
+      };
+      if (!payload.message) {
+        statusEl.textContent = "메시지를 입력해주세요.";
+        statusEl.className = "mt-2 text-sm text-red-600";
+        msgEl.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "전송 중…";
+      try {
+        const json = await submitWish(payload);
+        if (json.ok) {
+          statusEl.textContent = "등록되었습니다!";
+          statusEl.className = "mt-2 text-sm text-emerald-700";
+          $("#wishForm").reset();
+          countEl.textContent = "0 / 200";
+          loadList();
+        } else {
+          throw new Error(json.message || "error");
+        }
+      } catch (err) {
+        // 오프라인 큐 저장
+        const q = getQueue(); q.push({ ...payload, _queuedAt: Date.now() }); setQueue(q);
+        statusEl.textContent = "오프라인 감지: 연결되면 자동 재전송됩니다.";
+        statusEl.className = "mt-2 text-sm text-orange-600";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "보내기";
+      }
+    });
+
+    // 온라인 복구 시 큐 비우기
+    window.addEventListener("online", async () => {
+      const q = getQueue(); if (!q.length) return;
+      statusEl.textContent = "연결 복구됨: 대기 메시지 전송 중…";
+      statusEl.className = "mt-2 text-sm text-slate-600";
+      const remain = [];
+      for (const p of q) {
+        try { await submitWish(p); } catch { remain.push(p); }
+      }
+      setQueue(remain);
+      loadList();
+      statusEl.textContent = remain.length ? `일부 보류됨 (${remain.length})` : "모두 전송 완료!";
+    });
+
+    // 단축키: Ctrl+Enter로 전송(PC 친화)
+    $("#message").addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "Enter") $("#wishForm").requestSubmit();
+    });
+
+    // 초기 로딩
+    loadList();
+  </script>
+</body>
+</html>
